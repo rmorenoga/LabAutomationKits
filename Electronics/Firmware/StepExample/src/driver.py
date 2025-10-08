@@ -34,10 +34,10 @@ class RealMicrocontrollerService:
                     ["kAcknowledge", "s"],
                     ["kError", "s"],
                     ["kGetState", ""],
-                    ["kGetStateResult", "?I??I??I??I?I?I?I?I"],
+                    ["kGetStateResult", "?I?"],
                     ["kGetLastStep", ""],
-                    ["kGetLastStepResult", "??L?I??I??I??I?I?I?I?I"],
-                    ["kStep", "?I??I??I??I?I?I?I?IL"],
+                    ["kGetLastStepResult", "??L?I?"],
+                    ["kStep", "?I?L"],
                     ["kStop", ""],
                     ["kStepDone", ""], ]
 
@@ -114,20 +114,13 @@ class RealMicrocontrollerService:
         return result
 
 
-    def set_state(self, stateA: bool = False, speedA: int = 0, dirA: bool = True,
-                       stateB: bool = False, speedB: int = 0, dirB: bool = True,
-                       stateC: bool = False, speedC: int = 0, dirC: bool = True, 
-                       stateLed0: bool = False, intensityLed0: int = 0,
-                       stateLed1: bool = False, intensityLed1: int = 0,
-                       stateLed2: bool = False, intensityLed2: int = 0,
-                       stateLed3: bool = False, intensityLed3: int = 0,
-                       stateLed4: bool = False, intensityLed4: int = 0, stepTime: int = 50000):
+    def set_state(self, stateA: bool = False, speedA: int = 0, dirA: bool = True, stepTime: int = 50000):
         """
         Set the state of pumps A, B, C and the LEDs
         """
-        log.info(f"Setting state: A={stateA},{speedA},{dirA} B={stateB},{speedB},{dirB} C={stateC},{speedC},{dirC} led0={stateLed0},{intensityLed0} led1={stateLed1},{intensityLed1} led2={stateLed2},{intensityLed2} led3={stateLed3},{intensityLed3} led4={stateLed4},{intensityLed4} time={stepTime}")
+        log.info(f"Setting state: A={stateA},{speedA},{dirA} time={stepTime}")
         try:
-            self.comm.send("kStep", stateA, speedA, dirA, stateB, speedB, dirB, stateC, speedC, dirC, stateLed0, intensityLed0, stateLed1, intensityLed1, stateLed2, intensityLed2, stateLed3, intensityLed3, stateLed4, intensityLed4, stepTime)
+            self.comm.send("kStep", stateA, speedA, dirA, stepTime)
             msg = self.comm.receive()
             log.info(msg)
             log.info(f"State set response: {msg[1]}")
