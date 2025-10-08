@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException
 from driver import RealMicrocontrollerService, get_logger
 
 import time
@@ -26,7 +26,7 @@ async def startup_event():
     main_event_loop = asyncio.get_running_loop()
 
 @app.post("/actions")
-async def perform_actions(request: ActionRequest):
+async def perform_actions(request: ActionRequest, background_tasks: BackgroundTasks):
     global busy, stop_requested
     if busy:
         return {"status": "busy"}
@@ -34,7 +34,7 @@ async def perform_actions(request: ActionRequest):
     stop_requested = False
     # Send 'acknowledged' webhook immediately
     
-    action_task(request)
+    background_tasks.add_task(action_task, request)
     return {"status": "accepted", "id": request.id}
 
 # --- Helper methods ---
