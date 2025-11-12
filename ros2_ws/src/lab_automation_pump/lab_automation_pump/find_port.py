@@ -1,14 +1,14 @@
 import serial.tools.list_ports
 import platform
 
+
 def find_port(device_id=None):
     """
     Scans available serial ports and returns (found, port_name).
     If device_id is provided, matches by serial number or description.
-    On Windows, returns a hardcoded COM port (e.g., 'COM3').
+    On Windows, returns a hardcoded COM port (e.g., 'COM14').
     """
     if platform.system() == "Windows":
-        # Hardcode the COM port for Windows
         return True, "COM14"
     elif platform.system() == "Linux":
         return True, "/dev/ttyACM0"
@@ -18,6 +18,5 @@ def find_port(device_id=None):
             if device_id in (port.serial_number or '') or device_id in (port.description or ''):
                 return True, port.device
         else:
-            # Return the first available port if no device_id specified
             return True, port.device
-    return False, None 
+    return False, None
