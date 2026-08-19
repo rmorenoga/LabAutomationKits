@@ -6,6 +6,7 @@ Key points
 - Uses PlatformIO for building and uploading firmware.
 - Includes Python helper scripts for finding and talking to the device over serial.
 - The core example firmware and support libraries live under `src/` and `lib/` respectively.
+- Check the correspondance between driver.py and main.cpp these two contain the main parts of the communication protocol
 
 Requirements
 - PlatformIO (VS Code extension or `platformio` CLI)
