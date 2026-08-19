@@ -33,7 +33,7 @@ enum
 // We must define a callback function in our Arduino program for each entry in the list below.
 void attachCommandCallbacks()
 {
-  // Attach callback methods
+  // Attach callback methods to commands we expect to receive from the PC
   cmdMessenger.attach(OnUnknownCommand);
   cmdMessenger.attach(kWatchdog, OnWatchdogRequest);
   cmdMessenger.attach(kStart, OnReceiveStart);
