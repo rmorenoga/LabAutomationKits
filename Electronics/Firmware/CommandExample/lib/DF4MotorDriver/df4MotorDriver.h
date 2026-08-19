@@ -3,17 +3,19 @@
 #include <Arduino.h>
 #include "dataModel.h"
 
-
+// PWM pin assignments for the DF4 motor driver
 #define DFDRIVER_PWM_1 8
 #define DFDRIVER_PWM_2 16
 #define DFDRIVER_PWM_3 10
 #define DFDRIVER_PWM_4 11
 
+// Direction pin assignments for the DF4 motor driver
 #define DFDRIVER_DIR_1 9
 #define DFDRIVER_DIR_2 21
 #define DFDRIVER_DIR_3 13
 #define DFDRIVER_DIR_4 12
 
+// Class to represent a step in the pump control sequence including all three pumps
 class Step {
     public:
         bool stateA;
@@ -33,6 +35,7 @@ class Step {
 
 extern Step currentStep;
 
+// Function declarations for controlling the pumps
 void StartPumpA(uint16_t speed, int dir);
 void StartPumpB(uint16_t speed, int dir);
 void StartPumpC(uint16_t speed, int dir);

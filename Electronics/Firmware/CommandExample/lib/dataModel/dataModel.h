@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 
-
+// Class to represent the state of a pump, including its on/off state, speed, and direction
 class Pump{
     public:
         bool state = false;
