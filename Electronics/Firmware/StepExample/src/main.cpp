@@ -3,6 +3,7 @@
 #include "dataModel.h"
 #include "df4MotorDriver.h"
 
+// Create a CmdMessenger object, passing in the hardware serial port and the command separators
 CmdMessenger cmdMessenger(Serial, ',', ';', '/');
 
 // This is the list of recognized commands. These can be commands that can either be sent or received.
@@ -20,6 +21,8 @@ void returnLastStep();
 void receiveStep();
 void receiveStop();
 
+
+// Command IDs for the commands we send from the Arduino and want to receive on the PC.
 enum
 {
   // Commands
@@ -57,6 +60,7 @@ void OnUnknownCommand()
   cmdMessenger.sendCmd(kError, "Command without attached callback");
 }
 
+// Called when a received command is a watchdog request
 void OnWatchdogRequest()
 {
   // Will respond with same command ID and Unique device identifier.
@@ -69,29 +73,33 @@ void OnArduinoReady()
   cmdMessenger.sendCmd(kAcknowledge, "Arduino ready");
 }
 
+// Callback function that responds with the current state of the pumps
 void OnGetState()
 {
   returnState();
 }
-
+// Callback function that responds with the last run step of the pumps
 void OnGetLastStep()
 {
   returnLastStep();
 }
 
+// Callback function that receives a step command, sets the pumps accordingly and starts a timer to stop the pumps after the specified time
 void OnReceiveStep()
 {
   receiveStep();
 }
 
+// Callback function that receives a stop command and stops all pumps
 void OnReceiveStop()
 {
   receiveStop();
 }
 
 void setup() {
-
+// Start the serial port
   Serial.begin(115200);
+   // Setup the IO pins for the pumps and initialize the pump state
   setupPumps();
 
   //  Do not print newLine at end of command,
@@ -101,21 +109,26 @@ void setup() {
   // Attach my application's user-defined callback methods
   attachCommandCallbacks();
 
+  // Send a command to the PC to indicate that the Arduino has started
   cmdMessenger.sendCmd(kAcknowledge, "Arduino has started!");
  
 }
 
 void loop() {
-
+  
+  // Wait for a command to arrive, and call the appropriate callback function when it does.
   cmdMessenger.feedinSerialData();
+
+  // Check if a step is currently running and if it has completed
   if (currentStep.state)
   {
-    // Serial.println("Entering queue");
+    // Check if the step has completed by comparing the current time with the start time and the duration of the step
     if (!currentStep.done)
     {
-      // Serial.println("Step not done");
+      // Check if the current time minus the start time is greater than or equal to the duration of the step
       if (millis() - currentStep.stepStartTime >= currentStep.time)
       {
+        // If the step has completed, set the done flag to true, stop all pumps, and send a command to the PC indicating that the step is done
         currentStep.done = true;
         stopPumps();
         cmdMessenger.sendCmd(kStepDone);
@@ -123,29 +136,35 @@ void loop() {
     }
     else
     {
+      // If the step is done, reset the state of the current step to false
       currentStep.state = false;
-      // Serial.println("Deactivating queue and clearing after done");
     }
   }
 
 }
 
+// ------------------  C O M M A N D   H A N D L I N G -----------------------
+// Callback function that responds with the current state of the pumps
 void returnState()
 {
+  // Send the state result header
   cmdMessenger.sendCmdStart(kGetStateResult);
 
+  // Send the state of pump A as the body of the message, including the state, speed, and direction of the pump
   cmdMessenger.sendCmdBinArg<bool>(pumpA.state);
   cmdMessenger.sendCmdBinArg<uint16_t>(pumpA.speed);
   cmdMessenger.sendCmdBinArg<bool>(pumpA.dir);
-
+  
+  // Send the end of the message
   cmdMessenger.sendCmdEnd();
 }
 
+// Callback function that responds with the last run step of the pumps
 void returnLastStep()
 {
-
   cmdMessenger.sendCmdStart(kGetLastStepResult);
 
+  // Send the state of the current step as the body of the message, including the state, done flag, time, and the state, speed, and direction of pump A
   cmdMessenger.sendCmdBinArg<bool>(currentStep.state);
   cmdMessenger.sendCmdBinArg<bool>(currentStep.done);
   cmdMessenger.sendCmdBinArg<unsigned long>(currentStep.time);
@@ -153,30 +172,36 @@ void returnLastStep()
   cmdMessenger.sendCmdBinArg<bool>(currentStep.stateA);
   cmdMessenger.sendCmdBinArg<uint16_t>(currentStep.speedA);
   cmdMessenger.sendCmdBinArg<bool>(currentStep.dirA);
-
+  
+  // Send the end of the message
   cmdMessenger.sendCmdEnd();
 }
 
+// Callback function that receives a step command, sets the pumps accordingly and starts a timer to stop the pumps after the specified time
 void receiveStep()
 {
-
+   
+  // Check if a step is currently running and if it has completed
   if (currentStep.state && !currentStep.done)
-  {
+  { 
+    // Read the arguments from the command message, but do not use them since a step is already running
     cmdMessenger.readBinArg<bool>();
     cmdMessenger.readBinArg<uint16_t>();
     cmdMessenger.readBinArg<bool>();
 
     cmdMessenger.readBinArg<unsigned long>();
-
+    // Send an error message back to the PC indicating that a step is already running and cannot be started again
     cmdMessenger.sendCmd(kError, "Busy");
-    // cmdMessenger.sendCmdBinArg<unsigned long>(currentStep.time);
+
   }
   else
-  {
+  { 
+    // Read the arguments from the command message and set the state, speed, and direction of pump A accordingly
     currentStep.stateA = cmdMessenger.readBinArg<bool>();
     currentStep.speedA = cmdMessenger.readBinArg<uint16_t>();
     currentStep.dirA = cmdMessenger.readBinArg<bool>();
-
+    
+    // Change the state of pump A based on the received command
     if (currentStep.stateA)
     {
       StartPumpA(currentStep.speedA, currentStep.dirA);
@@ -185,27 +210,33 @@ void receiveStep()
     {
       StopPumpA();
     }
-
+    
+    // Set the state, speed, and direction of pump A in the global pumpA object of the data model to reflect the current state of the pump
     pumpA.state = currentStep.stateA;
     pumpA.speed = currentStep.speedA;
     pumpA.dir = currentStep.dirA;
 
+    // Read the time argument from the command message and set the time of the current step accordingly
     currentStep.time = cmdMessenger.readBinArg<unsigned long>();
 
+    // Set the state of the current step to true, indicating that a step is currently running, and set the done flag to false, indicating that the step has not yet completed. Also, record the start time of the step using the millis() function to track how long the step has been running.
     currentStep.state = true;
     currentStep.done = false;
     currentStep.stepStartTime = millis();
 
+    // Send an acknowledgment message back to the PC indicating that the step command has been received and processed successfully
     cmdMessenger.sendCmdStart(kAcknowledge);
     cmdMessenger.sendCmdArg("Step");
-    // cmdMessenger.sendCmdBinArg<unsigned long>(currentStep.time);
+    
+    // Send the end of the message
     cmdMessenger.sendCmdEnd();
   }
 }
 
+// Callback function that receives a stop command and stops all pumps
 void receiveStop()
 {
-
+  
   stopPumps();
   
   currentStep.done = true;

@@ -52,7 +52,7 @@ Typical workflow
 
 ```bash
 # (with venv activated)
-python src/driver.py <COM_PORT>
+python src/driver.py
 ```
 
 Project structure (high level)
