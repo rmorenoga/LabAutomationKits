@@ -17,7 +17,7 @@ class RealMicrocontrollerService:
 
     def __init__(self):
         log.info("Initializing microcontroller service")
-        found, comPort = find_port(os.getenv("DEVICE_ID"))
+        found, comPort = find_port("0000000-0000-0000-0000-00000000001")
 
         if found:
             log.info(f"Connected to the device: {comPort}")
