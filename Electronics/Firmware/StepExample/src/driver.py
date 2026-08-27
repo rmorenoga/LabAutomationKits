@@ -160,11 +160,15 @@ class RealMicrocontrollerService:
 
 def main():
     """Main function for testing the service directly."""
-    tile = RealMicrocontrollerService()
-    tile.set_state(stateA = True, speedA = 4096, dirA = True, stepTime = 50000)
-    
-    tile.getLastStep()
-    while not tile.check_for_step_done():
+    module = RealMicrocontrollerService()
+    # Set the state of the pumps and the time for the step, initiates a step operation
+    module.set_state(stateA = True, speedA = 4096, dirA = True, stepTime = 50000)
+
+    # Get the last step information
+    module.getLastStep()
+
+    # Wait for a step to complete
+    while not module.check_for_step_done():
         log.info("Waiting for step to complete...")
         time.sleep(1)
 
