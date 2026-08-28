@@ -1,3 +1,4 @@
 {
-    "ROS2.distro": "humble"
+    "ROS2.distro": "humble",
+    "cmake.sourceDirectory": "C:/Users/rodr/Git-projects/LabAutomationKits/ros2_ws/src/lab_automation_pump_interfaces"
 }
